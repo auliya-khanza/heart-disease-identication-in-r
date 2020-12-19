@@ -1,0 +1,299 @@
+---
+title: "tubes-fsd"
+author: "Chaela Rosi B (18523206), Auliya Khanza Q (18523214)"
+date: "12/19/2020"
+output: pdf_document
+---
+
+<style>
+body {
+text-align: justify}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+### Heart Disease Identification
+Penyakit jantung adalah kondisi ketika jantung mengalami gangguan seperti gangguan pembuluh darah jantung, irama jantung, katup jantung, atau bawaan dari lahir. Kelompok kami mengambil dataset mengenai penyakit jantung karena dalam dunia kesehatan penyakit jantung merupakan masalah utama dan data *World Health Organization* (WHO) menyatakan bahwa lebih dari 17 juta orang di dunia meninggal yang disebabkan oleh kerusakan pembuluh darah dan penyakit jantung. Data yang kami ambil merupakan data orang yang terkena penyakit jantung di negara Inggris. Penyakit jantung di Inggris memasuki fase yang cukup mengkhawatirkan, karena yang terkena penyakit jantung tidak memandang usia. Dataset didapatkan dari [UCI](https://archive.ics.uci.edu/ml/datasets/heart+disease).
+
+#### Import and Tidying Data
+Pertama, kami mengimpor dan merapikan datanya terlebih dahulu.
+
+```{r}
+library(dplyr)
+
+# import data
+data <- read.csv(file = 'heart.csv', fileEncoding="UTF-8-BOM", na.strings = "..")
+
+# tidying data
+data$sex <- ifelse(data$sex == 0, "Female", "Male")
+data$fbs <- ifelse(data$fbs == 0, "False", "True")
+data$exang <- ifelse(data$exang == 0, "No", "Yes")
+data$target <- ifelse(data$target == 0, "Haven't Disease", "Have Disease")
+
+glimpse(data)
+```
+
+Dataset ini memiliki 14 fitur. Berikut keterangan dari tiap kategori fitur:
+
+1. `age` - age in years
+2. `sex` (0 = female; 1 = male)
+3. `cp` - chest pain type (0 = typical angina; 1 = atypical angina; 2 = non-anginal pain; 3 = asymptomatic)
+4. `trestbps` - resting blood pressure (in mm Hg on admission to the hospital)
+5. `chol` - serum cholestoral in mg/dl
+6. `fbs` - fasting blood sugar > 120 mg/dL (0 = false; 1 = true)
+7. `restecg` - resting electrocardiographic results (0 = normal; 1 = having ST-T wave abnormality (T wave inversions and/or ST elevation or depression of > 0.05 mV); 2 = showing probable or definite left ventricular hypertrophy by Estes' criteria)
+8. `thalach` - maximum heart rate achieved
+9. `exang` - exercise induced angina (0 = no; 1 = yes)
+10. `oldpeak` - ST depression induced by exercise relative to rest
+11. `slope` - the slope of the peak exercise ST segment (0 = upsloping; 1 = flat; 2 = downsloping)
+12. `ca` - number of major vessels (0-3) colored by flourosopy
+13. `thal` (3 = normal; 6 = fixed defect; 7 = reversable defect)
+14. `target` - have disease or not
+
+
+### Exploratory Data Analysis
+Kami menganalisis data ini menggunakan `ggplot2`.
+
+
+##### Target's Chart
+```{r}
+library(ggplot2) 
+library(wesanderson)
+ggplot(data, aes(fill=target ,x = target)) +
+  geom_bar(stat = "count", width = 0.3) +
+  theme_linedraw() + 
+  scale_fill_manual(values = wes_palette(n=2, "GrandBudapest1")) +
+  labs(x = "Target", y = "Frequency")
+```
+
+Berdasarkan chart tersebut, `target` yang memiliki penyakit jantung lebih banyak daripada yang tidak. 
+
+Berikut persentase dari `target` yang memiliki penyakit jantung dan tidak memiliki penyakit jantung:
+```{r}
+library(dplyr)
+no_disease <-data %>%
+  group_by(target) %>%
+  filter(target == "Haven't Disease")
+percent_no_disease <- 100 * nrow(no_disease) / nrow(data)
+percent_no_disease
+
+disease <-data %>%
+  group_by(target) %>%
+  filter(target == "Have Disease")
+percent_disease <- 100 * nrow(disease) / nrow(data)
+percent_disease
+```
+
+
+##### Target's Age Chart
+```{r}
+library(ggplot2) 
+ggplot(data, aes(x = age)) +
+  geom_bar(stat = "count", width = 0.4, fill = "#ff847a") +
+  theme_linedraw() + 
+  labs(x = "Age", y = "Frequency")
+```
+
+Berdasarkan chart tersebut, penyakit jantung menyerang pada usia yang berkisar 40-50 tahun keatas.
+
+
+##### Target's Sex Chart
+```{r}
+library(ggplot2) 
+library(wesanderson)
+ggplot(data, aes(fill=sex, x = sex)) +
+  geom_bar(stat = "count", width = 0.3) +
+  theme_linedraw() + 
+  scale_fill_manual(values = wes_palette(n=2, "GrandBudapest1")) +
+  labs(x = "Sex", y = "Frequency")
+```
+
+Berdasarkan chart tersebut,`target` yang berjenis kelamin laki-laki lebih banyak daripada perempuan.
+
+Berikut persentase dari jumlah laki-laki dan perempuan `target`:
+```{r}
+female <- data %>%
+  group_by(sex) %>%
+  filter(sex == "Female")
+percent_female <- 100 * nrow(female) / nrow(data)
+percent_female
+
+male <- data %>%
+  group_by(sex) %>%
+  filter(sex == "Male")
+percent_female <- 100 * nrow(male) / nrow(data)
+percent_female
+```
+
+
+##### Heart Disease Frequency by Age
+```{r}
+library(ggplot2) 
+library(wesanderson)
+ggplot(data, aes(fill=target ,x = age)) +
+  geom_bar(stat = "count", width = 0.7) +
+  theme_linedraw() + 
+  scale_fill_manual(values = wes_palette(n=2, "GrandBudapest1")) +
+  labs(x = "Age", y = "Frequency")
+```
+
+Berdasarkan chart tersebut, orang yang beresiko terkena penyakit jantung berkisar dari umur 50 tahun keatas.
+
+
+##### Heart Disease Frequency by Sex
+```{r}
+library(ggplot2) 
+library(wesanderson)
+ggplot(data, aes(fill=target ,x = sex)) +
+  geom_bar(stat = "count", width = 0.3, position = "dodge2") +
+  theme_linedraw() + 
+  scale_fill_manual(values = wes_palette(n=2, "GrandBudapest1")) +
+  labs(x = "Sex", y = "Frequency")
+```
+
+
+##### Heart Disease Frequency According To Chest Pain Type
+```{r}
+library(ggplot2) 
+library(wesanderson)
+ggplot(data, aes(fill=target ,x = cp)) +
+  geom_bar(stat = "count", width = 0.3, position = "dodge2") +
+  theme_linedraw() + 
+  scale_fill_manual(values = wes_palette(n=2, "GrandBudapest1")) +
+  labs(x = "Chest Pain Type", y = "Frequency")
+```
+
+Berdasarkan chart tersebut, orang yang mengidap penyakit jantung lebih banyak terkena nyeri dada tipe 2 (*non-anginal pain*).
+
+
+##### Heart Disease Frequency According To FBS More Than 120 mg/dL
+```{r}
+library(ggplot2) 
+library(wesanderson)
+ggplot(data, aes(fill=target ,x = fbs)) +
+  geom_bar(stat = "count", width = 0.3, position = "dodge2") +
+  theme_linedraw() + 
+  scale_fill_manual(values = wes_palette(n=2, "GrandBudapest1")) +
+  labs(x = "Fasting Blood Sugar > 120 mg/dL", y = "Frequency")
+```
+
+Berdasarkan chart tersebut, `fbs` tidak memiliki korelasi dengan penyakit jantung karena baik orang yang mengidap penyakit jantung maupun yang tidak mengidap penyakit jantung memiliki `fbs` yang hampir sama. Menurut [WHO](https://www.who.int/data/gho/indicator-metadata-registry/imr-details/2380#), kadar normal dari *fasting blood sugar* adalah diantara 70 mg/dL dan 100 mg/dL. Jika *fasting blood sugar* berada di 100 mg/dL hingga 125 mg/dL, WHO merekomendasikan untuk mengubah gaya hidup dan memonitor *glycemia*.
+
+
+##### Heart Disease According To Maximum Heart Rate
+```{r}
+library(ggplot2)
+ggplot(data, aes(x=age,y=thalach,color=target, size=thalach)) +
+  geom_point(alpha=0.7)+xlab("Age") +
+  ylab("Maximum Heart Rate") +
+  guides(fill = guide_legend(title = "Target")) +
+  scale_color_manual(values = wes_palette(n=2, "GrandBudapest1"))
+```
+
+Berdasarkan chart tersebut, orang yang mengidap penyakit jantung cenderung memiliki jantung yang berdetak lebih cepat. Ini menandakan bahwa kenaikan detak jantung menjadi salah satu faktor dalam mengidentifikasi orang tersebut mengidap penyakit jantung atau tidak. Menurut [Pubmed](https://pubmed.ncbi.nlm.nih.gov/19615487/#:~:text=It%20has%20been%20shown%20that,pressure%20by%2010%20mm%20Hg.), peningkatan detak jantung sebesar 10 detik/menit dikaitkan dengan peningkatan risiko kematian jantung sebesar kurang lebih 20%.
+
+
+### Modelling with K Nearest Neighbors (KNN)
+Untuk mengidentifikasi orang yang mengidap penyakit jantung atau tidak, kami akan menggunakan model KNN. KNN adalah algoritma sederhana yang menyimpan semua kasus yang ada dan mengidentifikasi kasus baru berdasarkan kesamaan fitur.
+
+##### Import Data and Load Library
+Pertama, kami akan mengimpor dataset dan me-*load library* yang dibutuhkan.
+```{r}
+# dataset
+dataset <- read.csv(file = 'heart.csv', fileEncoding="UTF-8-BOM", na.strings = "..")
+
+# library 
+library(e1071) 
+library(caTools) 
+library(class)
+```
+
+##### Splitting Data
+Selanjutnya, kami akan membagi dataset menjadi **train set** dan **test set**.
+```{r}
+# splitting data into train and test data 
+split <- sample.split(dataset, SplitRatio = 0.7) 
+train_cl <- subset(dataset, split == "TRUE") 
+test_cl <- subset(dataset, split == "FALSE") 
+```
+
+##### Feature Scaling
+Lalu, dilakukan `feature scaling` untuk membuat data numerik pada dataset memiliki rentang nilai yang sama.
+```{r}
+# feature scaling 
+train_scale <- scale(train_cl[, 1:13]) 
+test_scale <- scale(test_cl[, 1:13]) 
+```
+
+##### Fitting KNN Model to Training Set
+Setelah dilakukan `splitting data` dan `feature scaling`, kami akan melatih model machine learning dengan **train set**. Untuk melakukan training, kita akan menggunakan fungsi `knn()`.
+```{r}
+classifier_knn <- knn(train = train_scale, 
+                      test = test_scale, 
+                      cl = train_cl$target, 
+                      k = 1) 
+classifier_knn 
+```
+
+##### Model Evalution
+Setelah melakukan proses training, kami akan mengevaluasi model yang sudah kita train sebelumnya dengan data **test set**.
+```{r}
+# calculate out of sample error 
+misClassError <- mean(classifier_knn != test_cl$target) 
+print(paste('Accuracy =', 1-misClassError)) 
+  
+# K = 3 
+classifier_knn <- knn(train = train_scale, 
+                      test = test_scale, 
+                      cl = train_cl$target, 
+                      k = 3) 
+misClassError <- mean(classifier_knn != test_cl$target) 
+print(paste('Accuracy =', 1-misClassError)) 
+  
+# K = 5 
+classifier_knn <- knn(train = train_scale, 
+                      test = test_scale, 
+                      cl = train_cl$target, 
+                      k = 5) 
+misClassError <- mean(classifier_knn != test_cl$target) 
+print(paste('Accuracy =', 1-misClassError)) 
+  
+# K = 7 
+classifier_knn <- knn(train = train_scale, 
+                      test = test_scale, 
+                      cl = train_cl$target, 
+                      k = 7) 
+misClassError <- mean(classifier_knn != test_cl$target) 
+print(paste('Accuracy =', 1-misClassError)) 
+  
+# K = 15 
+classifier_knn <- knn(train = train_scale, 
+                      test = test_scale, 
+                      cl = train_cl$target, 
+                      k = 15) 
+misClassError <- mean(classifier_knn != test_cl$target) 
+print(paste('Accuracy =', 1-misClassError)) 
+  
+# K = 19 
+classifier_knn <- knn(train = train_scale, 
+                      test = test_scale, 
+                      cl = train_cl$target, 
+                      k = 19) 
+misClassError <- mean(classifier_knn != test_cl$target) 
+print(paste('Accuracy =', 1-misClassError)) 
+```
+
+##### Confusion Matrix
+Terakhir, kami akan menggunakan `confusion matrix` untuk mengukur performa algoritma KNN ini. 
+```{r}
+library(caret)
+confusionMatrix(table(test_cl$target, classifier_knn))
+```
+Keterangan:
+
+1. `Accuracy` adalah performa keseluruhan model `K Nearest Neighbors` ini.
+2. `Sensitivity` digunakan untuk mengetahui performa model KNN ini dapat mengidentifikasi dengan benar orang yang mengidap penyakit jantung.
+3. `Specificity` digunakan untuk mengetahui performa model model KNN ini dapat mengidentifikasi dengan benar orang yang tidak mengidap penyakit jantung.
